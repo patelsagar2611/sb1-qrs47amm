@@ -10,7 +10,7 @@ function Square({ value, onClick, highlight }: {
 }) {
   return (
     <button
-      className={`w-20 h-20 border-2 border-gray-300 text-4xl font-bold flex items-center justify-center
+      className={`w-14 h-14 border-2 border-gray-300 text-2xl font-bold flex items-center justify-center
         transition-all duration-200 hover:bg-gray-100 ${highlight ? 'bg-green-200' : 'bg-white'} 
         ${value === 'X' ? 'text-blue-600' : 'text-red-600'}`}
       onClick={onClick}
@@ -21,22 +21,64 @@ function Square({ value, onClick, highlight }: {
 }
 
 function calculateWinner(squares: SquareValue[]): [SquareValue, number[]] | null {
-  const lines = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-    [0, 4, 8], [2, 4, 6] // diagonals
-  ];
+  const BOARD_SIZE = 5;
+  const WIN_LENGTH = 5;
 
-  for (const [a, b, c] of lines) {
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return [squares[a], [a, b, c]];
+  // Check horizontal lines
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    for (let col = 0; col <= BOARD_SIZE - WIN_LENGTH; col++) {
+      const startIndex = row * BOARD_SIZE + col;
+      const line = Array.from({ length: WIN_LENGTH }, (_, i) => startIndex + i);
+      if (checkLine(squares, line)) {
+        return [squares[startIndex], line];
+      }
     }
   }
+
+  // Check vertical lines
+  for (let col = 0; col < BOARD_SIZE; col++) {
+    for (let row = 0; row <= BOARD_SIZE - WIN_LENGTH; row++) {
+      const startIndex = row * BOARD_SIZE + col;
+      const line = Array.from({ length: WIN_LENGTH }, (_, i) => startIndex + i * BOARD_SIZE);
+      if (checkLine(squares, line)) {
+        return [squares[startIndex], line];
+      }
+    }
+  }
+
+  // Check diagonal lines (top-left to bottom-right)
+  for (let row = 0; row <= BOARD_SIZE - WIN_LENGTH; row++) {
+    for (let col = 0; col <= BOARD_SIZE - WIN_LENGTH; col++) {
+      const startIndex = row * BOARD_SIZE + col;
+      const line = Array.from({ length: WIN_LENGTH }, (_, i) => startIndex + i * BOARD_SIZE + i);
+      if (checkLine(squares, line)) {
+        return [squares[startIndex], line];
+      }
+    }
+  }
+
+  // Check diagonal lines (top-right to bottom-left)
+  for (let row = 0; row <= BOARD_SIZE - WIN_LENGTH; row++) {
+    for (let col = WIN_LENGTH - 1; col < BOARD_SIZE; col++) {
+      const startIndex = row * BOARD_SIZE + col;
+      const line = Array.from({ length: WIN_LENGTH }, (_, i) => startIndex + i * BOARD_SIZE - i);
+      if (checkLine(squares, line)) {
+        return [squares[startIndex], line];
+      }
+    }
+  }
+
   return null;
 }
 
+function checkLine(squares: SquareValue[], line: number[]): boolean {
+  const firstValue = squares[line[0]];
+  if (!firstValue) return false;
+  return line.every(index => squares[index] === firstValue);
+}
+
 function App() {
-  const [squares, setSquares] = useState<SquareValue[]>(Array(9).fill(null));
+  const [squares, setSquares] = useState<SquareValue[]>(Array(25).fill(null));
   const [xIsNext, setXIsNext] = useState(true);
   const [winningLine, setWinningLine] = useState<number[]>([]);
 
@@ -58,7 +100,7 @@ function App() {
   };
 
   const resetGame = () => {
-    setSquares(Array(9).fill(null));
+    setSquares(Array(25).fill(null));
     setXIsNext(true);
     setWinningLine([]);
   };
@@ -72,7 +114,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-8 rounded-xl shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Tic Tac Toe</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Connect Five</h1>
         
         <div className="mb-4">
           <div className="text-xl font-semibold text-gray-700 text-center">
@@ -80,7 +122,7 @@ function App() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mb-6">
+        <div className="grid grid-cols-5 gap-2 mb-6">
           {squares.map((square, i) => (
             <Square
               key={i}
